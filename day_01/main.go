@@ -9,26 +9,35 @@ import (
 )
 
 func main() {
-	taskTwo("./example.txt")
+	taskOne("./input.txt")
+	taskTwo("./input.txt")
 }
 
 func rotateDial(position int, direction string, steps int) (newPosition int, zeroCount int) {
-	newPosition = position
 	switch direction {
 	case "L":
-		newPosition -= steps
+		newPosition = position - steps
 	case "R":
-		newPosition += steps
+		newPosition = position + steps
 	}
-	rotationCount := utils.AbsoluteValue(newPosition / 100)
-	newPosition = 100 + (newPosition - 100*rotationCount)
 
-	if position == 0 && rotationCount > 0 {
+	rotationCount := utils.AbsoluteValue(newPosition / 100)
+	newPosition = newPosition % 100
+	if newPosition < 0 {
+		newPosition = newPosition + 100
+		rotationCount++
+	}
+
+	if position == 0 && rotationCount > 0 && direction == "L" {
 		return newPosition, rotationCount - 1
 	}
 
-	if newPosition == 0 {
+	if newPosition == 0 && rotationCount > 0 && direction == "L" {
 		return newPosition, rotationCount + 1
+	}
+
+	if newPosition == 0 && rotationCount == 0 {
+		return 0, 1
 	}
 
 	return newPosition, rotationCount
@@ -45,7 +54,7 @@ func taskOne(inputPath string) {
 			panic(err) // Since this is puzzle input, we can assume it's always valid
 		}
 		position, _ = rotateDial(position, direction, steps)
-		fmt.Printf("Moved %s%d to position %d\n", direction, steps, position)
+		// fmt.Printf("Moved %s%d to position %d\n", direction, steps, position)
 		if position == 0 {
 			zeroCounter++
 		}
@@ -67,10 +76,7 @@ func taskTwo(inputPath string) {
 		}
 		position, zeroCount = rotateDial(position, direction, steps)
 		zeroCounter += zeroCount
-		fmt.Printf("Moved %s%d to position %d\n", direction, steps, position)
-		if zeroCount > 0 {
-			fmt.Printf("Added to zero count: %d. Total: %d.\n", zeroCount, zeroCounter)
-		}
+		// fmt.Printf("Moved %s%d to position %d. Added %d zeroes, total: %d.\n", direction, steps, position, zeroCount, zeroCounter)
 	}
 	fmt.Printf("Task 2: %d\n", zeroCounter)
 }
