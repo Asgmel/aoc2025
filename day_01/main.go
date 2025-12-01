@@ -21,7 +21,7 @@ func rotateDial(position int, direction string, steps int) (newPosition int, zer
 		newPosition += steps
 	}
 	rotationCount := utils.AbsoluteValue(newPosition / 100)
-	newPosition = utils.AbsoluteValue(newPosition - 100*rotationCount)
+	newPosition = 100 + (newPosition - 100*rotationCount)
 
 	if position == 0 && rotationCount > 0 {
 		return newPosition, rotationCount - 1
