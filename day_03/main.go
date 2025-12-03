@@ -9,22 +9,36 @@ import (
 
 func main() {
 	taskOne("./input.txt")
+	taskTwo("./input.txt")
 }
 
 func taskOne(inputPath string) {
 	puzzleInput := input.ReadInputLines(inputPath)
 	totalJoltage := 0
 	for _, bank := range puzzleInput {
-		totalJoltage += findMaxJoltageInBank(bank)
+		totalJoltage += findMaxJoltageInBank(bank, 2)
 	}
 	fmt.Printf("Total joltage: %d\n", totalJoltage)
 }
 
-func findMaxJoltageInBank(bank string) (joltage int) {
-	idx, firstJoltage := findMaxJoltage(bank[:len(bank)-1])
-	_, secondJoltage := findMaxJoltage(bank[idx+1:])
-	fmt.Printf("Bank %s: max joltages are %d and %d\n", bank, firstJoltage, secondJoltage)
-	result, err := strconv.Atoi(string(firstJoltage) + string(secondJoltage))
+func taskTwo(inputPath string) {
+	puzzleInput := input.ReadInputLines(inputPath)
+	totalJoltage := 0
+	for _, bank := range puzzleInput {
+		totalJoltage += findMaxJoltageInBank(bank, 12)
+	}
+	fmt.Printf("Total joltage: %d\n", totalJoltage)
+}
+
+func findMaxJoltageInBank(bank string, numOfBatteries int) (joltage int) {
+	joltages := ""
+	currentIndex := 0
+	for i := 1; i <= numOfBatteries; i++ {
+		idx, maxJoltage := findMaxJoltage(bank[currentIndex : len(bank)-numOfBatteries+i])
+		currentIndex += idx + 1
+		joltages += string(maxJoltage)
+	}
+	result, err := strconv.Atoi(joltages)
 	if err != nil {
 		panic(err)
 	}
