@@ -1,2 +1,4 @@
 github.com/asgmel/aockit v0.0.0-20251204070829-69e194cfd5a1 h1:X1l+lv4ZnGdoy+iA52cRXjs1Q48zk0XmbR7eMy1Sm2Y=
 github.com/asgmel/aockit v0.0.0-20251204070829-69e194cfd5a1/go.mod h1:HU6AFL6zR13yUilnbKh101vsXNfZvdBXU/mT3abwa9k=
+github.com/asgmel/aockit v0.0.0-20251204072207-09a5bfea6b45 h1:aDNUBFCM5BD8T1aO8lODpQ823xf9tRAoYsDZuQYEnpM=
+github.com/asgmel/aockit v0.0.0-20251204072207-09a5bfea6b45/go.mod h1:HU6AFL6zR13yUilnbKh101vsXNfZvdBXU/mT3abwa9k=

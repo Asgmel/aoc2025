@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/asgmel/aockit/grid"
 	"github.com/asgmel/aockit/input"
 )
@@ -79,9 +77,9 @@ func markForkliftAccessablePaper(matrix [][]string) [][]string {
 			}
 		}
 	}
-	for _, row := range markedMatrix {
-		fmt.Printf("%s\n", row)
-	}
+	// for _, row := range markedMatrix {
+	// 	fmt.Printf("%s\n", row)
+	// }
 	return markedMatrix
 }
 
