@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/asgmel/aockit/input"
 )
@@ -13,12 +14,22 @@ type freshRange struct {
 	end   int
 }
 
+func (r freshRange) ElementsInRange() int {
+	return r.end - r.start + 1
+}
+
 func (r freshRange) InRange(val int) bool {
 	return val >= r.start && val <= r.end
 }
 
 func main() {
+	start := time.Now()
 	taskOne("./input.txt")
+	fmt.Printf("taskOne took %s\n", time.Since(start))
+
+	start = time.Now()
+	taskTwo("./input.txt")
+	fmt.Printf("taskTwo took %s\n", time.Since(start))
 }
 
 func taskOne(inputPath string) {
@@ -64,4 +75,55 @@ func formatPuzzleInput(input []string) (freshIds []freshRange, ids []int) {
 		}
 	}
 	return freshIds, ids
+}
+
+func taskTwo(inputPath string) {
+	puzzleInput := input.ReadInputLines(inputPath)
+	freshRanges, _ := formatPuzzleInput(puzzleInput)
+	uniqueRanges := getUniqueRanges(freshRanges)
+	totalFreshCount := 0
+	for _, r := range uniqueRanges {
+		totalFreshCount += r.ElementsInRange()
+	}
+	fmt.Printf("Total fresh id count: %d\n", totalFreshCount)
+}
+
+func rangeOverlapsStart(r1, r2 freshRange) bool {
+	return r1.start <= r2.start && r1.end >= r2.start
+}
+
+func rangeOverlapsEnd(r1, r2 freshRange) bool {
+	return r1.start <= r2.end && r1.end >= r2.end
+}
+
+func rangeContains(r1, r2 freshRange) bool {
+	return r1.start <= r2.start && r1.end >= r2.end
+}
+
+func getUniqueRanges(ranges []freshRange) (uniqueRanges []freshRange) {
+rangeLoop:
+	for _, r := range ranges {
+		currentRange := freshRange{start: r.start, end: r.end}
+		for i := 0; i < len(uniqueRanges); i++ {
+			uniqueRange := uniqueRanges[i]
+			if rangeContains(uniqueRange, currentRange) {
+				continue rangeLoop
+			}
+			if rangeContains(currentRange, uniqueRange) {
+				// Remove existing element i, since currentRange completely contains it
+				uniqueRanges = append(uniqueRanges[:i], uniqueRanges[i+1:]...)
+				i--
+				continue
+			}
+			if rangeOverlapsStart(currentRange, uniqueRange) {
+				currentRange.end = uniqueRange.start - 1
+				i = -1
+			} else if rangeOverlapsEnd(currentRange, uniqueRange) {
+				currentRange.start = uniqueRange.end + 1
+				i = -1
+			}
+		}
+		uniqueRanges = append(uniqueRanges, currentRange)
+	}
+	return uniqueRanges
 }
