@@ -100,30 +100,29 @@ func rangeContains(r1, r2 freshRange) bool {
 	return r1.start <= r2.start && r1.end >= r2.end
 }
 
-func getUniqueRanges(ranges []freshRange) (uniqueRanges []freshRange) {
-rangeLoop:
-	for _, r := range ranges {
-		currentRange := freshRange{start: r.start, end: r.end}
-		for i := 0; i < len(uniqueRanges); i++ {
-			uniqueRange := uniqueRanges[i]
-			if rangeContains(uniqueRange, currentRange) {
-				continue rangeLoop
-			}
-			if rangeContains(currentRange, uniqueRange) {
-				// Remove existing element i, since currentRange completely contains it
-				uniqueRanges = append(uniqueRanges[:i], uniqueRanges[i+1:]...)
-				i--
-				continue
-			}
-			if rangeOverlapsStart(currentRange, uniqueRange) {
-				currentRange.end = uniqueRange.start - 1
-				i = -1
-			} else if rangeOverlapsEnd(currentRange, uniqueRange) {
-				currentRange.start = uniqueRange.end + 1
-				i = -1
-			}
+func recursiveGetUniqueRanges(currentRange freshRange, uniqueRanges []freshRange) []freshRange {
+	for i := 0; i < len(uniqueRanges); i++ {
+		uniqueRange := uniqueRanges[i]
+		if rangeContains(uniqueRange, currentRange) {
+			return uniqueRanges
+		} else if rangeContains(currentRange, uniqueRange) {
+			uniqueRanges = append(uniqueRanges[:i], uniqueRanges[i+1:]...)
+			return recursiveGetUniqueRanges(currentRange, uniqueRanges)
+		} else if rangeOverlapsStart(currentRange, uniqueRange) {
+			currentRange.end = uniqueRange.start - 1
+			return recursiveGetUniqueRanges(currentRange, uniqueRanges)
+		} else if rangeOverlapsEnd(currentRange, uniqueRange) {
+			currentRange.start = uniqueRange.end + 1
+			return recursiveGetUniqueRanges(currentRange, uniqueRanges)
 		}
-		uniqueRanges = append(uniqueRanges, currentRange)
+	}
+	uniqueRanges = append(uniqueRanges, currentRange)
+	return uniqueRanges
+}
+
+func getUniqueRanges(ranges []freshRange) (uniqueRanges []freshRange) {
+	for _, r := range ranges {
+		uniqueRanges = recursiveGetUniqueRanges(r, uniqueRanges)
 	}
 	return uniqueRanges
 }
