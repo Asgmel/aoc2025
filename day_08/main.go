@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/asgmel/aockit/input"
+	"github.com/asgmel/aockit/utils"
 )
 
 type junctionBox struct {
@@ -15,26 +17,83 @@ type junctionBox struct {
 	z int
 }
 
+func (jb junctionBox) name() string {
+	return fmt.Sprintf("(%d,%d,%d)", jb.x, jb.y, jb.z)
+}
+
 type junctionConnection struct {
 	from     junctionBox
 	to       junctionBox
 	distance float64
 }
 
+type circuit struct {
+	junctionBoxes []junctionBox
+}
+
 func main() {
-	taskOne("./example.txt")
+	taskOne("./input.txt")
 }
 
 func taskOne(inputPath string) {
 	puzzleInput := input.ReadInputLines(inputPath)
 	junctionBoxes := createJunctionBoxesFromInput(puzzleInput)
+	circuits := createInitialCircuits(junctionBoxes)
 	connections := calculateConnections(junctionBoxes)
-	for _, conn := range connections {
-		fmt.Printf("From (%d,%d,%d) to (%d,%d,%d): Distance %.2f\n",
-			conn.from.x, conn.from.y, conn.from.z,
-			conn.to.x, conn.to.y, conn.to.z,
-			conn.distance)
+	sortedConnections := sortConnectionsByDistanceAscending(connections)
+	for _, connection := range sortedConnections[:1000] {
+		circuits = connectCircuits(connection, circuits)
 	}
+	uniqueCircuits := filterDuplicateCircuits(circuits)
+	sort.Slice(uniqueCircuits, func(i, j int) bool {
+		return len(uniqueCircuits[i].junctionBoxes) > len(uniqueCircuits[j].junctionBoxes)
+	})
+	sum := len(uniqueCircuits[0].junctionBoxes) * len(uniqueCircuits[1].junctionBoxes) * len(uniqueCircuits[2].junctionBoxes)
+	fmt.Printf("The sum of the sizes of the three largest circuits is: %d\n", sum)
+}
+
+func filterDuplicateCircuits(circuits map[junctionBox]*circuit) []circuit {
+	uniqueCircuits := make(map[*circuit]bool)
+
+	for _, circuitPtr := range circuits {
+		uniqueCircuits[circuitPtr] = true
+	}
+
+	result := make([]circuit, 0, len(uniqueCircuits))
+	for circuitPtr := range uniqueCircuits {
+		result = append(result, *circuitPtr)
+	}
+
+	return result
+}
+
+func createInitialCircuits(jb []junctionBox) map[junctionBox]*circuit {
+	circuits := make(map[junctionBox]*circuit)
+	for _, box := range jb {
+		circuits[box] = &circuit{
+			junctionBoxes: []junctionBox{box},
+		}
+	}
+	return circuits
+}
+
+func connectCircuits(connection junctionConnection, circuits map[junctionBox]*circuit) map[junctionBox]*circuit {
+	merged := append(circuits[connection.from].junctionBoxes, circuits[connection.to].junctionBoxes...)
+	filtered := utils.FilterDuplicates(merged)
+	mergedCircuit := &circuit{
+		junctionBoxes: filtered,
+	}
+	for _, jb := range mergedCircuit.junctionBoxes {
+		circuits[jb] = mergedCircuit
+	}
+	return circuits
+}
+
+func sortConnectionsByDistanceAscending(sortedConnections []junctionConnection) []junctionConnection {
+	sort.Slice(sortedConnections, func(i, j int) bool {
+		return sortedConnections[i].distance < sortedConnections[j].distance
+	})
+	return sortedConnections
 }
 
 func calculateConnections(junctionBoxes []junctionBox) []junctionConnection {
