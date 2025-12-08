@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/asgmel/aockit/input"
 	"github.com/asgmel/aockit/utils"
@@ -15,10 +16,6 @@ type junctionBox struct {
 	x int
 	y int
 	z int
-}
-
-func (jb junctionBox) name() string {
-	return fmt.Sprintf("(%d,%d,%d)", jb.x, jb.y, jb.z)
 }
 
 type junctionConnection struct {
@@ -32,7 +29,13 @@ type circuit struct {
 }
 
 func main() {
+	start := time.Now()
 	taskOne("./input.txt")
+	fmt.Printf("taskOne took %s\n", time.Since(start))
+
+	start = time.Now()
+	taskTwo("./input.txt")
+	fmt.Printf("taskTwo took %s\n", time.Since(start))
 }
 
 func taskOne(inputPath string) {
@@ -49,7 +52,24 @@ func taskOne(inputPath string) {
 		return len(uniqueCircuits[i].junctionBoxes) > len(uniqueCircuits[j].junctionBoxes)
 	})
 	sum := len(uniqueCircuits[0].junctionBoxes) * len(uniqueCircuits[1].junctionBoxes) * len(uniqueCircuits[2].junctionBoxes)
-	fmt.Printf("The sum of the sizes of the three largest circuits is: %d\n", sum)
+	fmt.Printf("Task 1: %d\n", sum)
+}
+
+func taskTwo(inputPath string) {
+	puzzleInput := input.ReadInputLines(inputPath)
+	junctionBoxes := createJunctionBoxesFromInput(puzzleInput)
+	circuits := createInitialCircuits(junctionBoxes)
+	connections := calculateConnections(junctionBoxes)
+	sortedConnections := sortConnectionsByDistanceAscending(connections)
+	result := 0
+	for _, connection := range sortedConnections {
+		circuits = connectCircuits(connection, circuits)
+		if len(filterDuplicateCircuits(circuits)) == 1 {
+			result = connection.to.x * connection.from.x
+			break
+		}
+	}
+	fmt.Printf("Task 2: %d\n", result)
 }
 
 func filterDuplicateCircuits(circuits map[junctionBox]*circuit) []circuit {
