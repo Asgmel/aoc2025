@@ -41,18 +41,15 @@ func taskOne(inputPath string) {
 func taskTwo(inputPath string) {
 	puzzleInput := input.ReadInputLines(inputPath)
 	positions := formatPuzzleInput(puzzleInput)
-	border := generateBorderPositions(positions)
 	rectangles := calculateRectangles(positions)
 	sort.Slice(rectangles, func(i, j int) bool {
 		return rectangles[i].area > rectangles[j].area
 	})
 
-	// Cache for inside/outside checks
 	cache := make(map[grid.Position]bool)
 
-	for idx, rect := range rectangles {
-		fmt.Printf("Checking rectangle %d with area %d\n", idx, rect.area)
-		if rectangleFullyInsideBorderCached(rect, positions, border, cache) {
+	for _, rect := range rectangles {
+		if rectangleInsideBorder(rect, positions, cache) {
 			fmt.Printf("Task 2: %d\n", rect.area)
 			return
 		}
@@ -60,7 +57,7 @@ func taskTwo(inputPath string) {
 	fmt.Printf("No rectangle found for Task 2\n")
 }
 
-func rectangleFullyInsideBorderCached(rect rectangle, positions []grid.Position, border map[grid.Position]struct{}, cache map[grid.Position]bool) bool {
+func rectangleInsideBorder(rect rectangle, positions []grid.Position, cache map[grid.Position]bool) bool {
 	minX := min(rect.p1.X, rect.p2.X)
 	maxX := max(rect.p1.X, rect.p2.X)
 	minY := min(rect.p1.Y, rect.p2.Y)
@@ -68,24 +65,24 @@ func rectangleFullyInsideBorderCached(rect rectangle, positions []grid.Position,
 
 	pos1 := grid.Position{X: rect.p1.X, Y: rect.p2.Y}
 	pos2 := grid.Position{X: rect.p2.X, Y: rect.p1.Y}
-	if !posInsideBorderCached(pos1, positions, border, cache) || !posInsideBorderCached(pos2, positions, border, cache) {
+	if !posInsideBorderCached(pos1, positions, cache) || !posInsideBorderCached(pos2, positions, cache) {
 		return false
 	}
 
 	for x := minX + 1; x < maxX; x++ {
-		if !posInsideBorderCached(grid.Position{X: x, Y: minY}, positions, border, cache) {
+		if !posInsideBorderCached(grid.Position{X: x, Y: minY}, positions, cache) {
 			return false
 		}
-		if !posInsideBorderCached(grid.Position{X: x, Y: maxY}, positions, border, cache) {
+		if !posInsideBorderCached(grid.Position{X: x, Y: maxY}, positions, cache) {
 			return false
 		}
 	}
 
 	for y := minY + 1; y < maxY; y++ {
-		if !posInsideBorderCached(grid.Position{X: minX, Y: y}, positions, border, cache) {
+		if !posInsideBorderCached(grid.Position{X: minX, Y: y}, positions, cache) {
 			return false
 		}
-		if !posInsideBorderCached(grid.Position{X: maxX, Y: y}, positions, border, cache) {
+		if !posInsideBorderCached(grid.Position{X: maxX, Y: y}, positions, cache) {
 			return false
 		}
 	}
@@ -93,12 +90,12 @@ func rectangleFullyInsideBorderCached(rect rectangle, positions []grid.Position,
 	return true
 }
 
-func posInsideBorderCached(pos grid.Position, positions []grid.Position, border map[grid.Position]struct{}, cache map[grid.Position]bool) bool {
+func posInsideBorderCached(pos grid.Position, positions []grid.Position, cache map[grid.Position]bool) bool {
 	if result, exists := cache[pos]; exists {
 		return result
 	}
 
-	result := posInsideBorder(pos, positions, border)
+	result := posInsideBorder(pos, positions)
 	cache[pos] = result
 	return result
 }
@@ -131,35 +128,29 @@ func calculateRectangles(positions []grid.Position) []rectangle {
 	return rectangles
 }
 
-func generateBorderPositions(p []grid.Position) map[grid.Position]struct{} {
-	border := make(map[grid.Position]struct{})
-	for i := 0; i < len(p); i++ {
-		j := (i + 1) % len(p)
-		border[p[i]] = struct{}{}
-
-		if p[i].X == p[j].X {
-			for k := min(p[i].Y, p[j].Y) + 1; k < max(p[i].Y, p[j].Y); k++ {
-				border[grid.Position{X: p[i].X, Y: k}] = struct{}{}
-			}
-		} else if p[i].Y == p[j].Y {
-			for k := min(p[i].X, p[j].X) + 1; k < max(p[i].X, p[j].X); k++ {
-				border[grid.Position{X: k, Y: p[i].Y}] = struct{}{}
-			}
-		}
-	}
-	return border
-}
-
-func posInsideBorder(pos grid.Position, positions []grid.Position, border map[grid.Position]struct{}) bool {
-	if _, onBorder := border[pos]; onBorder {
-		return true
-	}
-
+func posInsideBorder(pos grid.Position, positions []grid.Position) bool {
 	crossings := 0
 
 	for i := 0; i < len(positions); i++ {
-		j := (i + 1) % len(positions) // Wrap around to the first position
+		j := (i + 1) % len(positions)
 
+		// Check if the point is exactly on a border line
+		if positions[i].X == positions[j].X && positions[i].X == pos.X {
+			minY := min(positions[i].Y, positions[j].Y)
+			maxY := max(positions[i].Y, positions[j].Y)
+			if pos.Y >= minY && pos.Y <= maxY {
+				return true
+			}
+		} else if positions[i].Y == positions[j].Y && positions[i].Y == pos.Y {
+			minX := min(positions[i].X, positions[j].X)
+			maxX := max(positions[i].X, positions[j].X)
+			if pos.X >= minX && pos.X <= maxX {
+				return true
+			}
+		}
+
+		// If we are not on a border line, check for crossings
+		// Skip horizontal border, as we will never cross them with a horizontal ray
 		if positions[i].Y == positions[j].Y {
 			continue
 		}
